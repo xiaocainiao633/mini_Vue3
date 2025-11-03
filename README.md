@@ -1,5 +1,5 @@
-<img width="1522" height="741" alt="image" src="https://github.com/user-attachments/assets/4f3983fe-1fa0-4dba-a186-f72f18da141c" />
 采用menerepo包管理模式，具体配置在另一个仓库，已上传部分：
+
 ```
 Vue3.4\Reactivity(响应式基础)
 ├── baseHandlers.ts(Handler)
@@ -10,5 +10,5 @@ Vue3.4\Reactivity(响应式基础)
 ├── reactivity.ts(Reactive)
 ├── ref.ts(ref对象、toRef、toRefs、proxyRefs、toReactive)
 └── watch-effect.ts(事件监听)
-...
 ```
+<img width="1522" height="741" alt="image" src="https://github.com/user-attachments/assets/4f3983fe-1fa0-4dba-a186-f72f18da141c" />
