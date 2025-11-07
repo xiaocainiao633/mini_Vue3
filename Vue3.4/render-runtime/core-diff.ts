@@ -30,7 +30,12 @@ function isString(type: any) {
 // type:节点类型,props:属性,children:子节点
 export const createVNode = (type: any, props: any, children: any) => {
   // 判断类型,如果是原生类型则为1,如果是组件等类型即为0
-	const shapeFlag = isString(type) ? ShapeFlags.ELEMENT : 0;
+	const shapeFlag = isString(type) 
+  ? ShapeFlags.ELEMENT
+  : isObject(type)
+  ? ShapeFlags.STATEFUL_COMPONENT 
+  : 0;
+  
 	const vnode = {
     // 标记为VNode对象
 		__v_isVNode: true,
@@ -385,7 +390,7 @@ export function createRenderer(options: any) {
     return result;
   }
 
-  const processElement = (n1: any, n2: any, container: any) => {
+  const processElement = (n1: any, n2: any, container: any, anchor?: any) => {
     if(n1 == null) {
       mountElement(n2,container)
     } else {
@@ -394,6 +399,9 @@ export function createRenderer(options: any) {
   }
 
   const unmount = (vnode: any) => {
+    if(vnode.type === 'Fragment') {
+      return unmountChildren(vnode.children)
+    }
     hostRemove(vnode.el)
   }
 
@@ -411,7 +419,12 @@ export function createRenderer(options: any) {
     container._vnode = vnode
   }
   return {
-    render
+    render,
+    unmount,
+    processElement,
+    options,
+    mountChildren,
+    patchChildren
   }
 }
 
