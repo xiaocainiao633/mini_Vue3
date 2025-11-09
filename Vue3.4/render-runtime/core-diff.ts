@@ -1,4 +1,6 @@
 import { isObject } from '../Rectivity/reactivity'
+import { Fragment } from '../composition_render/Text&&Fragment'
+import { isFunction } from '../Rectivity/computed'
 
 export const isSameVNodeType = (n1: any, n2: any) => {
   return n1.type === n2.type && n1.key === n2.key
@@ -28,12 +30,15 @@ function isString(type: any) {
 }
 
 // type:节点类型,props:属性,children:子节点
+// 简化版Ref实现
 export const createVNode = (type: any, props: any, children: any) => {
   // 判断类型,如果是原生类型则为1,如果是组件等类型即为0
 	const shapeFlag = isString(type) 
   ? ShapeFlags.ELEMENT
   : isObject(type)
   ? ShapeFlags.STATEFUL_COMPONENT 
+  : isFunction(type)
+  ? ShapeFlags.FUNCTIONAL_COMPONENT
   : 0;
   
 	const vnode = {
@@ -49,14 +54,19 @@ export const createVNode = (type: any, props: any, children: any) => {
 		el: null,
     // 子节点
 		children,
-		shapeFlag
+		shapeFlag,
+    ref: props && props.ref,
 	};
 
 	if (children) {
 		let type = 0;
 		if (Array.isArray(children)) {
 			type = ShapeFlags.ARRAY_CHILDREN;
-		} else {
+		} else if(isObject(children)) {
+      // 类型是插槽
+      type = ShapeFlags.SLOTS_CHILDREN
+    } 
+    else {
 			children = String(children);
 			type = ShapeFlags.TEXT_CHILDREN;
 		}
@@ -120,7 +130,7 @@ export function createRenderer(options: any) {
     }
   }
 
-  const mountElement = (vnode: any, container: any) => {
+  const mountElement = (vnode: any, container: any, ...args: any) => {
     const { type, props, shapeFlag } = vnode
     // 创建真实DOM元素,并挂载到vode.el上
     let el = (vnode.el = hostCreateElement(type))
@@ -144,11 +154,28 @@ export function createRenderer(options: any) {
     hostInsert(el, container)
   }
 
+  function setRef(rawRef: any, vnode: any) {
+    const refValue = 
+        vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT
+          ? vnode.component.exposed || vnode.component!.proxy
+          : vnode.el
+    if(rawRef) {
+      rawRef.value = refValue
+    }
+  }
+
+  // vnode中的ref
+  let ref
+
   // patch是核心函数,负责节点的初始化渲染和更新
   // 不直接依赖具体平台的 API，而是调用 options 中传入的抽象方法
   const patch = (n1: any, n2: any, container: any, anchor?: any) => {
     if(n1 == n2) {
       return 
+    }
+
+    if(ref !== null) {
+      setRef(ref, n2)
     }
 
     if(n1 && !isSameVNodeType(n1, n2)) {
@@ -390,20 +417,25 @@ export function createRenderer(options: any) {
     return result;
   }
 
-  const processElement = (n1: any, n2: any, container: any, anchor?: any) => {
+  const processElement = (n1: any, n2: any, container: any, anchor?: any, parentComponent?: any) => {
     if(n1 == null) {
-      mountElement(n2,container)
+      mountElement(n2, container, anchor, parentComponent)
     } else {
       patchElement(n1, n2)
     }
   }
 
   const unmount = (vnode: any) => {
-    if(vnode.type === 'Fragment') {
-      return unmountChildren(vnode.children)
-    }
-    hostRemove(vnode.el)
-  }
+	  const { shapeFlag } = vnode;
+	  if (vnode.type === Fragment) {
+		  return unmountChildren(vnode.children);
+	  } else if (shapeFlag & ShapeFlags.COMPONENT) {
+		  // 组件那么移除
+		    return unmount(vnode.component.subTree); // 移除组件
+	  }
+	  hostRemove(vnode.el);
+  };
+
 
   // 是渲染器的入口方法,负责触发渲染流程
   const render = (vnode: any, container: any) => {
@@ -424,7 +456,8 @@ export function createRenderer(options: any) {
     processElement,
     options,
     mountChildren,
-    patchChildren
+    patchChildren,
+    patch
   }
 }
 
