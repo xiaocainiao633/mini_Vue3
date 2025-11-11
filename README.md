@@ -1,7 +1,19 @@
-采用menerepo包管理模式，具体配置在另一个仓库:[monorepo](https://github.com/xiaocainiao633/the-basic-code-of-Vue3.git)
-此项目是简单的vue实现，约3500行代码，大部分功能已实现，有详细注释
+### 本仓库记录关于vue框架以及相关生态的源码解析
+
+1.采用menerepo包管理模式，具体配置在另一个仓库:[monorepo](https://github.com/xiaocainiao633/the-basic-code-of-Vue3.git)
+
+2.简单的vue实现，约3500行代码，大部分功能已实现，有详细注释
+
 未实现部分：对style和script的代码处理，以及严格的类型控制，如：vnode,instance等，大部分都使用了基本类型，可以通过参数名推断类型
+
 具体目录如下，不久之后会更新react源码，灵感来源于：[Vue3](https://cccdk.github.io/my-vue/),编译原理实现参考：[Compiler](https://vue-compiler.iamouyang.cn/)
+
+3.Pinia基本实现
+
+4. Vite基本实现(还未完成)
+
+5.VueRouter基本实现(还未完成) 
+
 ```
 Vue3.4
 ├── composition_render
@@ -35,5 +47,14 @@ Vue3.4
     ├── core-diff.ts(虚拟节点创建、h、render、diff算法，组件渲染逻辑，依赖注入等整体控制)
     ├── nodeOps.ts(节点定义)
     └── patchProp.ts(对比属性)
+```
+
+```
+Pinia
+├── createPinia.js(createPinia实现)
+├── defineStore.js(defineStore实现，包括对插件的实现)
+├── pinia.ts(简单例子)
+├── pubSub.js(订阅模式处理)
+└── rootStore.js(全局变量)
 ```
 <img width="1522" height="741" alt="image" src="https://github.com/user-attachments/assets/4f3983fe-1fa0-4dba-a186-f72f18da141c" />
