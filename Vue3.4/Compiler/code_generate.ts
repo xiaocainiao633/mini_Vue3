@@ -11,6 +11,10 @@ function isString(val: any) {
   return (typeof val === 'string' && val !== null) ? true : false
 }
 
+function isSymbol(val: any) {
+  return val === 'Symbol' ? true : false
+}
+
 // 代码生成阶段上下文管理工具，生成什么代码
 function createCodegeContext() {
 	const context = {
@@ -106,10 +110,18 @@ function genFunctionPreamble(ast: any, context: any) {
 
 // 节点类型分发
 function genNode(node: any, context: any) {
+  if (isString(node)) {
+		context.push(node);
+		return;
+	}
+  if (isSymbol(node)) {
+		context.push(context.helper(node));
+		return;
+	}
 	switch (node.type) {
 		case NodeTypes.TEXT:
       // 文本节点
-			genText(node, context);
+			genText(node, context)
 			break
     case NodeTypes.INTERPOLATION:
       // 插值接点
@@ -122,32 +134,45 @@ function genNode(node: any, context: any) {
     case NodeTypes.VNODE_CALL: // 元素调用
       genVNodeCall(node, context)
       break
+    case NodeTypes.JS_OBJECT_EXPRESSION:
+      // 对象表达式节点
+      genObjectExpression(node, context)
+      break
+    case NodeTypes.ELEMENT:
+			genNode(node.codegenNode, context)
+      break
+    case NodeTypes.COMPOUND_EXPRESSION:
+      genCompoundExpression(node, context)
+			break
+    case NodeTypes.JS_CALL_EXPRESSION: // 表达式处理
+			genCallExpression(node, context);
+			break;
 	}
 }
 
 export function generate(ast: any) {
   // 创建代码生成上下文
-	const context = createCodegeContext();
-	const { push, indent, deindent } = context;
+	const context = createCodegeContext()
+	const { push, indent, deindent } = context
   // 生成的函数前置代码
-	genFunctionPreamble(ast, context);
+	genFunctionPreamble(ast, context)
   // 定义render函数名和参数
-	const functionName = 'render';
-	const args = ['_ctx', '$props']; // 对应组件上下文和props
+	const functionName = 'render'
+	const args = ['_ctx', '$props'] // 对应组件上下文和props
   // 生成函数声明的框架
-	push(`function ${functionName}(${args.join(', ')}){`);
-	indent();
+	push(`function ${functionName}(${args.join(', ')}){`)
+	indent()
   // 生成return
-	push(`return `);
+	push(`return `)
 	if (ast.codegenNode) {
     // 若根节点有 codegenNode（转换阶段生成的代码元数据），则处理该节点
-		genNode(ast.codegenNode, context);
+		genNode(ast.codegenNode, context)
 	} else {
-		push(`null`);
+		push(`null`)
 	}
 	deindent()
 	push(`}`)
-	return context.code;
+	return context.code
 }
 
 const ast = {
@@ -166,18 +191,18 @@ return function render(_ctx, $props){
 // 生成表达式代码：let r = compile('{{age}}');
 // 处理简单表达式节点
 function genExpression(node: any, context: any) {
-	const { content } = node; // 表达式内容（如 "_ctx.msg"、"_ctx.user.name"）
-	context.push(content); // 直接将表达式内容拼到代码中
+	const { content } = node // 表达式内容（如 "_ctx.msg"、"_ctx.user.name"）
+	context.push(content) // 直接将表达式内容拼到代码中
 }
 
 // 处理插值节点
 function genInterpolation(node: any, context: any) {
-	const { push, helper } = context;
+	const { push, helper } = context
   // 1. 生成字符串化辅助函数调用（如 _toDisplayString(）
-	push(`${helper(TO_DISPLAY_STRING)}(`);
+	push(`${helper(TO_DISPLAY_STRING)}(`)
   // 2. 递归处理插值内部的表达式（如 {{ msg }} 中的 msg → _ctx.msg）
-	genNode(node.content, context);
-	push(`)`);
+	genNode(node.content, context)
+	push(`)`)
 }
 `
 {{ user.name }} 经过处理后：
@@ -203,22 +228,22 @@ genNode 识别到 SIMPLE_EXPRESSION 类型，调用 genExpression 输出 _ctx.us
 // 生成节点列表代码
 function genNodeList(nodes: any, context: any) {
 	// 生成节点列表，用","分割
-	const { push } = context;
+	const { push } = context
 	for (let i = 0; i < nodes.length; i++) {
-		const node = nodes[i];
+		const node = nodes[i]
     // 处理不同类型的节点：
 		if (isString(node)) {
-			push(`${node}`); // 如果是字符串直接放入
+			push(`${node}`) // 如果是字符串直接放入
 		} else if (Array.isArray(node)) {
       // 数组递归处理
-			genNodeList(node, context);
+			genNodeList(node, context)
 		} else {
       // 其他节点通过genNode处理，如属性对象、子节点
-			genNode(node, context);
+			genNode(node, context)
 		}
     // 非最后一个节点，添加逗号分割
 		if (i < nodes.length - 1) {
-			push(', ');
+			push(', ')
 		}
 	}
 }
@@ -226,26 +251,26 @@ function genNodeList(nodes: any, context: any) {
 
 // 生成虚拟节点创建函数调用 
 function genVNodeCall(node: any, context: any) {
-	const { push, helper } = context;
-	const { tag, props, children, isBlock } = node; // 从VNODE_CALL节点获取信息
+	const { push, helper } = context
+	const { tag, props, children, isBlock } = node // 从VNODE_CALL节点获取信息
 
   // 块级节点：先调用openBlock初始化块上下文
 	if (isBlock) {
-		push(`(${helper(OPEN_BLOCK)}(),`);
+		push(`(${helper(OPEN_BLOCK)}(),`)
 	}
 	// 生成createElementBlock或者createElementVnode
 	const callHelper = isBlock ? CREATE_ELEMENT_BLOCK : CREATE_ELEMENT_VNODE;
-	push(helper(callHelper));
+	push(helper(callHelper))
   // 生成函数参数列表
-	push('(');
+	push('(')
   // 处理参数
 	genNodeList(
 		[tag, props, children].map((item) => item || 'null'),
 		context
-	);
-	push(`)`);
+	)
+	push(`)`)
 	if (isBlock) {
-		push(`)`);
+		push(`)`)
 	}
 }
 
@@ -260,3 +285,58 @@ function genVNodeCall(node: any, context: any) {
 `
 
 // 生成元素属性
+function genObjectExpression(node: any, context: any) {
+	const { push } = context
+	const { properties } = node // 属性键值对数组
+  // 无属性时，直接生成空对象
+	if (!properties.length) {
+		push(`{}`)
+		return
+	}
+  // 生成对象开始前
+	push('{')
+  // 遍历所有属性，生成key:value形式
+	for (let i = 0; i < properties.length; i++) {
+		const { key, value } = properties[i]
+		// 生成key
+		push(key)
+    // 生成冒号和空格
+		push(`: `)
+    // 生成value
+		push(JSON.stringify(value))
+		if (i < properties.length - 1) {
+			push(`,`)
+		}
+	}
+	push('}')
+}
+
+// 处理Fragment情况，let r = compile(`<div>123</div><div>123</div>`);
+// 处理复合表达式：let r = compile(`<div>123 {{abc}}</div>`);
+function genCompoundExpression(node: any, context: any) {
+  // 遍历复合表达式的子数组
+	for (let i = 0; i < node.children!.length; i++) {
+		const child = node.children![i]
+		if (isString(child)) {
+      // 字符串直接拼接
+			context.push(child)
+		} else {
+      // 非字符串节点处理
+			genNode(child, context)
+		}
+	}
+}
+`_createElementBlock('div', null, "Hello " + _toDisplayString(_ctx.name) + "!")`
+
+// 处理函数调用
+function genCallExpression(node: any, context: any) {
+	const { push, helper } = context;
+  // 处理被调用函数名
+	const callee = helper(node.callee)
+  // 开始部分
+	push(callee + `(`, node)
+  // 生成参数列表
+	genNodeList(node.arguments, context)
+  // 结束部分
+	push(`)`)
+}
