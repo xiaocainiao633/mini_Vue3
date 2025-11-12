@@ -12,7 +12,7 @@
 
 4.Vite基本实现(还未完成)
 
-5.VueRouter基本实现(还未完成) 
+5.VueRouter基本实现 
 
 ```
 Vue3.4
@@ -57,4 +57,20 @@ Pinia
 ├── pubSub.js(订阅模式处理)
 └── rootStore.js(全局变量)
 ```
+
+```
+Router
+├── components(存放vue-router两个组件)
+│   ├── router-link.js
+│   └── router-view.js
+├── create-matcher.js(创建匹配器，路由映射表)
+├── history(存放浏览器跳转相关逻辑)
+│   ├── base.js
+│   ├── hash.js
+│   └── history.js
+├── index.js(引用时的入口文件)
+├── 路由简介.md
+└── install.js(install方法)
+```
+
 <img width="1522" height="741" alt="image" src="https://github.com/user-attachments/assets/4f3983fe-1fa0-4dba-a186-f72f18da141c" />
