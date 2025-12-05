@@ -14,6 +14,8 @@
 
 5.VueRouter基本实现 
 
+[ts](https://www.typescriptlang.org/zh/docs/handbook/typescript-from-scratch.html)
+
 ```
 Vue3.4
 ├── composition_render
