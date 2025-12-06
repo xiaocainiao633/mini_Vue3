@@ -14,7 +14,7 @@
 
 5.VueRouter基本实现 
 
-[ts](https://www.typescriptlang.org/zh/docs/handbook/typescript-from-scratch.html)
+[ts](https://ts.nodejs.cn/docs/handbook/2/everyday-types.html)
 
 ```
 Vue3.4
